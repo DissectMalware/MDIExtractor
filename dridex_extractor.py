@@ -1,14 +1,12 @@
-import json
-
-from XLMMacroDeobfuscator.deobfuscator import process_file
-from XLMMacroDeobfuscator.configs.settings import SILENT
 import sys
-import os
 import base64
 import re
+import json
+from XLMMacroDeobfuscator.deobfuscator import process_file
 
 dridex_file = sys.argv[1]
 
+print('[Discovering Starting Point]')
 result = process_file(file=dridex_file,
             noninteractive= True,
             noindent= True,
@@ -26,6 +24,7 @@ if len(result) > 1:
     print("[Start Point]: {}".format(start_addr))
 
     json_output_path = dridex_file+'.json'
+    print('[Emulating XLM macro]')
     result = process_file(file=dridex_file,
                           noninteractive=True,
                           noindent=True,
@@ -35,6 +34,7 @@ if len(result) > 1:
                           start_point=start_addr,
                           silent=True,
                           timeout=30)
+    print('[dumped JSON file]: {}'.format(json_output_path))
 
     with open(json_output_path, 'r') as json_output:
         result = json.load(json_output)
