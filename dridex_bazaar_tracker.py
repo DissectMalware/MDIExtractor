@@ -17,7 +17,7 @@ def dump_records(api_key, tags, start_date, output_dir):
     files = []
     header = None
     for tag in tags:
-        response = bazaar.query(tag, count=10000)
+        response = bazaar.query(tag, count=1000)
         response_obj = json.loads(response)
         records = bazaar.summarize_query(response_obj, 'xlsm|xlsx|xlsb')
 
@@ -78,10 +78,13 @@ def unzip_file(file_path):
 
 def process_file(file_path):
     for file in unzip_file(file_path):
-        urls = dridex_extractor.main(file, silent=True)
-        with open(file + '.url.txt', 'w') as output:
-            output.write(''.join(urls))
-            print('\r\n'.join(urls))
+        try:
+            urls = dridex_extractor.main(file, silent=True)
+            with open(file + '.url.txt', 'w') as output:
+                output.write(''.join(urls))
+                print('\r\n'.join(urls))
+        except:
+            print('[ERROR]: {}'.format(file))
 
 
 def main(output_dir):
@@ -89,9 +92,11 @@ def main(output_dir):
     query_result_path = 'output-{}-{}.csv'.format('-'.join(tags), str(datetime.date.today()))
     config = get_config()
     if 'abuse_bazaar_api_key' in config:
-        dump_records(config['abuse_bazaar_api_key'], tags, datetime.datetime.now() - datetime.timedelta(hours=12), query_result_path)
+        print('[Querying Bazaar]')
+        dump_records(config['abuse_bazaar_api_key'], tags, datetime.datetime.now() - datetime.timedelta(hours=24), query_result_path)
+        print('[Downloading from Bazaar]')
         bazaar_zip_files = dump_files(config['abuse_bazaar_api_key'], query_result_path, output_dir)
-
+        print('[Processing files]')
         with Pool(config['process_pool_size']) as process:
             process.map(process_file, bazaar_zip_files)
 
